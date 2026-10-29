@@ -1,40 +1,25 @@
-name: Build Windows EXE
-
+name: "Build Windows EXE"
 on:
   push:
-    branches: [ main, master ]
-  workflow_dispatch:
-
+    branches: [ main ]
 jobs:
   build:
     runs-on: windows-latest
     permissions:
-      contents: write   # нужно для создания Release (gh release create)
+      contents: write
     steps:
       - uses: actions/checkout@v4
-
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '8.0.x'
-
-      - name: Publish single-file EXE (self-contained)
-        run: dotnet publish BallGame/BallGame.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:DebugType=none -o publish-out
-
-      - name: Zip
-        run: Compress-Archive -Path publish-out/BallGame.exe -DestinationPath BallGame-win-x64.zip
-
-      - uses: actions/upload-artifact@v4
-        with:
-          name: BallGame-exe
-          path: |
-            publish-out/BallGame.exe
-            BallGame-win-x64.zip
-
-      - name: 'Create GitHub Release'
-        if: github.event_name != 'pull_request'
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          $tag = "v1.0-build-" + $env:GITHUB_RUN_NUMBER
-          gh release create $tag --target $env:GITHUB_SHA --title "BallGame EXE ($tag)" --notes "2D игра «Весёлый Мяч» на C#. Скачайте BallGame.exe (или zip), запустите на Windows x64 — ничего устанавливать не нужно." publish-out/BallGame.exe BallGame-win-x64.zip
+      - name: "Test network logic"
+        run: dotnet run -c Release --project tests/NetTestLib
+      - name: "Publish single-file EXE"
+        run: dotnet publish P2PChat/P2PChat.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -o publish-out
+      - name: "Zip"
         shell: pwsh
+        run: Compress-Archive -Path publish-out/P2PChat.exe -DestinationPath P2PChat-win-x64.zip -Force
+      - name: "Create release"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh release create v1.0-chat --title "P2P Chat EXE" --notes "Скачай P2PChat.exe, запусти на обоих ПК в одной сети - соединение автоматическое" P2PChat-win-x64.exe=publish-out/P2PChat.exe P2PChat-win-x64.zip || gh release upload v1.0-chat P2PChat-win-x64.exe=publish-out/P2PChat.exe P2PChat-win-x64.zip --clobber
