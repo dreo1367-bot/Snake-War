@@ -1,4 +1,7 @@
-```
 __pycache__/
 *.pyc
-```
+bin/
+obj/
+publish/
+publish-out/
+*.user

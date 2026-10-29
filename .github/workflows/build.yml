@@ -1,0 +1,40 @@
+name: Build Windows EXE
+
+on:
+  push:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Publish single-file EXE (self-contained)
+        run: dotnet publish BallGame/BallGame.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:DebugType=none -o publish-out
+
+      - name: Zip
+        run: Compress-Archive -Path publish-out/BallGame.exe -DestinationPath BallGame-win-x64.zip
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: BallGame-exe
+          path: |
+            publish-out/BallGame.exe
+            BallGame-win-x64.zip
+
+      - name: Create release
+        if: github.event_name == 'push'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v1.0-build-${{ github.run_number }}
+          files: |
+            publish-out/BallGame.exe
+            BallGame-win-x64.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
