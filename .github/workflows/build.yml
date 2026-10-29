@@ -30,7 +30,7 @@ jobs:
             publish-out/BallGame.exe
             BallGame-win-x64.zip
 
-      - name: Create GitHub Release (через gh CLI, permissions: contents: write)
+      - name: 'Create GitHub Release'
         if: github.event_name != 'pull_request'
         env:
           GH_TOKEN: ${{ github.token }}
