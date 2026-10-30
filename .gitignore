@@ -9,4 +9,3 @@ artifacts/
 ## Python
 __pycache__/
 *.pyc
-Release/
