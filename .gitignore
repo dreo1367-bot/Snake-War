@@ -1,4 +1,11 @@
-```
+## .NET
+bin/
+obj/
+*.user
+publish/
+*.exe
+artifacts/
+
+## Python
 __pycache__/
 *.pyc
-```

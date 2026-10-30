@@ -1,0 +1,43 @@
+name: Build Windows EXE and Release
+
+on:
+  push:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET 8
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Publish single-file EXE
+        run: dotnet publish BrickBreaker3D/BrickBreaker3D.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -o publish
+
+      - name: Zip artifact
+        run: Compress-Archive -Path publish/BrickBreaker3D.exe -DestinationPath BrickBreaker3D-win-x64.zip
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: BrickBreaker3D-win-x64
+          path: BrickBreaker3D-win-x64.zip
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v1.0.${{ github.run_number }}
+          name: Brick Breaker 3D v1.0.${{ github.run_number }}
+          files: BrickBreaker3D-win-x64.zip
+          body: "3D Brick Breaker demo (C# + OpenTK, custom physics). Self-contained Windows x64 single-file build."
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
